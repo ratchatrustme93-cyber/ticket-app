@@ -4,9 +4,18 @@ import { getHolidayMap } from "../data/thaiHolidays";
 
 const WEEKDAYS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 const MONTHS_TH = [
-  "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
-  "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม",
-  "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+  "มกราคม",
+  "กุมภาพันธ์",
+  "มีนาคม",
+  "เมษายน",
+  "พฤษภาคม",
+  "มิถุนายน",
+  "กรกฎาคม",
+  "สิงหาคม",
+  "กันยายน",
+  "ตุลาคม",
+  "พฤศจิกายน",
+  "ธันวาคม",
 ];
 
 const STATUS_DOT = {
@@ -42,13 +51,17 @@ export default function Calendar() {
   const holidayMap = useMemo(() => getHolidayMap(year), [year]);
 
   const prevMonth = () => {
-    if (month === 0) { setMonth(11); setYear((y) => y - 1); }
-    else setMonth((m) => m - 1);
+    if (month === 0) {
+      setMonth(11);
+      setYear((y) => y - 1);
+    } else setMonth((m) => m - 1);
     setSelectedDay(null);
   };
   const nextMonth = () => {
-    if (month === 11) { setMonth(0); setYear((y) => y + 1); }
-    else setMonth((m) => m + 1);
+    if (month === 11) {
+      setMonth(0);
+      setYear((y) => y + 1);
+    } else setMonth((m) => m + 1);
     setSelectedDay(null);
   };
   const goToday = () => {
@@ -80,7 +93,10 @@ export default function Calendar() {
   };
 
   const isToday = (day) =>
-    day && year === now.getFullYear() && month === now.getMonth() && day === now.getDate();
+    day &&
+    year === now.getFullYear() &&
+    month === now.getMonth() &&
+    day === now.getDate();
 
   const isSunday = (day) => {
     if (!day) return false;
@@ -125,17 +141,43 @@ export default function Calendar() {
           >
             วันนี้
           </button>
-          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          <button
+            onClick={prevMonth}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
           <span className="text-sm font-semibold text-gray-800 w-40 text-center">
             {MONTHS_TH[month]} {year + 543}
           </span>
-          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          <button
+            onClick={nextMonth}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -148,7 +190,11 @@ export default function Calendar() {
             <div
               key={d}
               className={`py-2 text-center text-xs font-semibold ${
-                i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-gray-400"
+                i === 0
+                  ? "text-red-400"
+                  : i === 6
+                    ? "text-blue-400"
+                    : "text-gray-400"
               }`}
             >
               {d}
@@ -165,7 +211,9 @@ export default function Calendar() {
             const isSelected = day === selectedDay;
             const isSun = isSunday(day);
             const hasOverdue = dayTickets.some(
-              (t) => t.status !== "DONE" && new Date(t.dueDate) < new Date(now.toDateString())
+              (t) =>
+                t.status !== "DONE" &&
+                new Date(t.dueDate) < new Date(now.toDateString()),
             );
 
             return (
@@ -178,8 +226,8 @@ export default function Calendar() {
                         isSelected
                           ? "bg-blue-50"
                           : isHoliday
-                          ? "bg-red-50/40 hover:bg-red-50"
-                          : "hover:bg-gray-50"
+                            ? "bg-red-50/40 hover:bg-red-50"
+                            : "hover:bg-gray-50"
                       }`
                     : "bg-gray-50/30"
                 }`}
@@ -193,10 +241,10 @@ export default function Calendar() {
                           isToday(day)
                             ? "bg-blue-600 text-white"
                             : isHoliday || isSun
-                            ? "text-red-500 font-semibold"
-                            : hasOverdue
-                            ? "text-orange-500"
-                            : "text-gray-700"
+                              ? "text-red-500 font-semibold"
+                              : hasOverdue
+                                ? "text-orange-500"
+                                : "text-gray-700"
                         }`}
                       >
                         {day}
@@ -206,7 +254,10 @@ export default function Calendar() {
                     <div className="space-y-0.5">
                       {/* Holidays — show first */}
                       {dayHolidays.slice(0, 2).map((h, hi) => (
-                        <div key={hi} className="flex items-center gap-1 min-w-0">
+                        <div
+                          key={hi}
+                          className="flex items-center gap-1 min-w-0"
+                        >
                           <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-red-400" />
                           <p className="text-xs text-red-500 truncate leading-tight font-medium">
                             {h.name}
@@ -216,8 +267,13 @@ export default function Calendar() {
 
                       {/* Tickets */}
                       {dayTickets.slice(0, 2).map((t) => (
-                        <div key={t.id} className="flex items-center gap-1 min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[t.status]}`} />
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-1 min-w-0"
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[t.status]}`}
+                          />
                           <p className="text-xs text-gray-600 truncate leading-tight">
                             {t.title}
                           </p>
@@ -247,7 +303,8 @@ export default function Calendar() {
               {selectedDay} {MONTHS_TH[month]} {year + 543}
             </h3>
             <span className="text-xs text-gray-400">
-              {selectedHolidays.length > 0 && `${selectedHolidays.length} วันหยุด · `}
+              {selectedHolidays.length > 0 &&
+                `${selectedHolidays.length} วันหยุด · `}
               {selectedTickets.length} ticket
             </span>
           </div>
@@ -258,9 +315,13 @@ export default function Calendar() {
               {selectedHolidays.map((h, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                  <span className="text-sm text-red-600 font-medium">{h.name}</span>
+                  <span className="text-sm text-red-600 font-medium">
+                    {h.name}
+                  </span>
                   <span className="text-xs text-gray-400 ml-auto">
-                    {h.type === "buddhist" ? "วันสำคัญทางพุทธ" : "วันหยุดราชการ"}
+                    {h.type === "buddhist"
+                      ? "วันสำคัญทางพุทธ"
+                      : "วันหยุดราชการ"}
                   </span>
                 </div>
               ))}
@@ -273,14 +334,25 @@ export default function Calendar() {
           ) : (
             <div className="space-y-2">
               {selectedTickets.map((t) => (
-                <div key={t.id} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[t.status]}`} />
-                  <p className="text-sm text-gray-800 flex-1 truncate">{t.title}</p>
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${STATUS_STYLE[t.status]}`}>
+                <div
+                  key={t.id}
+                  className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[t.status]}`}
+                  />
+                  <p className="text-sm text-gray-800 flex-1 truncate">
+                    {t.title}
+                  </p>
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${STATUS_STYLE[t.status]}`}
+                  >
                     {STATUS_LABEL[t.status]}
                   </span>
                   {t.assignee && (
-                    <span className="text-xs text-gray-400 shrink-0">{t.assignee.name}</span>
+                    <span className="text-xs text-gray-400 shrink-0">
+                      {t.assignee.name}
+                    </span>
                   )}
                 </div>
               ))}
@@ -299,11 +371,13 @@ export default function Calendar() {
             {monthHolidays.map(({ day, holidays }) =>
               holidays.map((h, i) => (
                 <div key={`${day}-${i}`} className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500 w-6 text-right shrink-0">{day}</span>
+                  <span className="text-xs text-gray-500 w-6 text-right shrink-0">
+                    {day}
+                  </span>
                   <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
                   <span className="text-sm text-gray-700">{h.name}</span>
                 </div>
-              ))
+              )),
             )}
           </div>
         </div>

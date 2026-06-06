@@ -14,10 +14,11 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  createdTickets  Ticket[] @relation("CreatedBy")
-  assignedTickets Ticket[] @relation("AssignedTo")
+  createdTickets  Ticket[]   @relation("CreatedBy")
+  assignedTickets Ticket[]   @relation("AssignedTo")
   notes           Note[]
   memos           Memo[]
+  activities      Activity[]
 }
 
 model Memo {
@@ -32,27 +33,51 @@ model Memo {
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Label {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  color   String   @default("#6B7280")
+  tickets Ticket[] @relation("TicketLabels")
+}
+
 model Ticket {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String?
-  status      Status   @default(TODO)
-  priority    Priority @default(MEDIUM)
+  status      Status    @default(TODO)
+  priority    Priority  @default(MEDIUM)
   dueDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  position    Float     @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   creatorId  Int
   creator    User  @relation("CreatedBy", fields: [creatorId], references: [id])
   assigneeId Int?
   assignee   User? @relation("AssignedTo", fields: [assigneeId], references: [id])
 
-  notes Note[]
+  notes      Note[]
+  labels     Label[]    @relation("TicketLabels")
+  activities Activity[]
 }
 
 model Note {
   id        Int      @id @default(autoincrement())
   content   String
+  createdAt DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  action    String
+  fromValue String?
+  toValue   String?
   createdAt DateTime @default(now())
 
   ticketId Int
