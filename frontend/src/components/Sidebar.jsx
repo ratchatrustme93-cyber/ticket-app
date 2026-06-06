@@ -127,9 +127,16 @@ export default function Sidebar() {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-800 truncate">
-              {user?.name}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-gray-800 truncate">
+                {user?.name}
+              </p>
+              {user?.role === "ADMIN" && (
+                <span className="text-xs px-1 py-0.5 rounded bg-blue-100 text-blue-600 font-semibold shrink-0 leading-none">
+                  Admin
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-400 truncate">{user?.email}</p>
           </div>
         </div>

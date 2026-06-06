@@ -83,6 +83,7 @@ export default function TicketModal({
   ticket,
   users,
   labels,
+  canEdit,
   onClose,
   onSave,
   onDelete,
@@ -220,6 +221,31 @@ export default function TicketModal({
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+          {/* View-only banner */}
+          {isEdit && !canEdit && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+              <svg
+                className="w-3.5 h-3.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              View only — คุณไม่ใช่ผู้สร้าง ticket นี้
+            </div>
+          )}
+
           {/* Title */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -232,7 +258,8 @@ export default function TicketModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, title: e.target.value }))
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              readOnly={!canEdit}
+              className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500 cursor-default"}`}
             />
           </div>
 
@@ -248,7 +275,8 @@ export default function TicketModal({
                 setForm((p) => ({ ...p, description: e.target.value }))
               }
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              readOnly={!canEdit}
+              className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none resize-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500 cursor-default"}`}
             />
           </div>
 
@@ -263,7 +291,8 @@ export default function TicketModal({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, status: e.target.value }))
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!canEdit}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500"}`}
               >
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -281,7 +310,8 @@ export default function TicketModal({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, priority: e.target.value }))
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!canEdit}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500"}`}
               >
                 {PRIORITIES.map((p) => (
                   <option key={p} value={p}>
@@ -299,7 +329,8 @@ export default function TicketModal({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, assigneeId: e.target.value }))
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={!canEdit}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500"}`}
               >
                 <option value="">Unassigned</option>
                 {users.map((u) => (
@@ -319,7 +350,8 @@ export default function TicketModal({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, dueDate: e.target.value }))
                 }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                readOnly={!canEdit}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500 cursor-default"}`}
               />
             </div>
           </div>
@@ -346,93 +378,97 @@ export default function TicketModal({
                 ) : null;
               })}
 
-              {/* Picker trigger */}
-              <div className="relative" ref={labelPickerRef}>
-                <button
-                  type="button"
-                  onClick={() => setLabelPickerOpen((p) => !p)}
-                  className="text-xs px-2 py-0.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition"
-                >
-                  + Add label
-                </button>
+              {/* Picker trigger — only for editors */}
+              {canEdit && (
+                <div className="relative" ref={labelPickerRef}>
+                  <button
+                    type="button"
+                    onClick={() => setLabelPickerOpen((p) => !p)}
+                    className="text-xs px-2 py-0.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition"
+                  >
+                    + Add label
+                  </button>
 
-                {labelPickerOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-2">
-                    {/* Available labels */}
-                    <div className="max-h-36 overflow-y-auto">
-                      {(labels || [])
-                        .filter((l) => !form.labelIds.includes(l.id))
-                        .map((l) => (
-                          <button
-                            key={l.id}
-                            type="button"
-                            onClick={() => {
-                              toggleLabel(l.id);
-                              setLabelPickerOpen(false);
-                            }}
-                            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left"
-                          >
-                            <div
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{ backgroundColor: l.color }}
+                  {labelPickerOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-2">
+                      {/* Available labels */}
+                      <div className="max-h-36 overflow-y-auto">
+                        {(labels || [])
+                          .filter((l) => !form.labelIds.includes(l.id))
+                          .map((l) => (
+                            <button
+                              key={l.id}
+                              type="button"
+                              onClick={() => {
+                                toggleLabel(l.id);
+                                setLabelPickerOpen(false);
+                              }}
+                              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left"
+                            >
+                              <div
+                                className="w-3 h-3 rounded-full shrink-0"
+                                style={{ backgroundColor: l.color }}
+                              />
+                              <span className="text-sm text-gray-700">
+                                {l.name}
+                              </span>
+                            </button>
+                          ))}
+                        {(labels || []).filter(
+                          (l) => !form.labelIds.includes(l.id),
+                        ).length === 0 && (
+                          <p className="text-xs text-gray-400 px-2 py-1.5">
+                            ใช้ทุก label แล้ว
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Create new label */}
+                      <div className="border-t border-gray-100 mt-1 pt-2 px-1 space-y-1.5">
+                        <div className="flex flex-wrap gap-1">
+                          {LABEL_COLORS.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setNewLabelColor(c)}
+                              className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110"
+                              style={{
+                                backgroundColor: c,
+                                borderColor:
+                                  newLabelColor === c ? "white" : "transparent",
+                                outline:
+                                  newLabelColor === c
+                                    ? `2px solid ${c}`
+                                    : "none",
+                              }}
                             />
-                            <span className="text-sm text-gray-700">
-                              {l.name}
-                            </span>
-                          </button>
-                        ))}
-                      {(labels || []).filter(
-                        (l) => !form.labelIds.includes(l.id),
-                      ).length === 0 && (
-                        <p className="text-xs text-gray-400 px-2 py-1.5">
-                          ใช้ทุก label แล้ว
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Create new label */}
-                    <div className="border-t border-gray-100 mt-1 pt-2 px-1 space-y-1.5">
-                      <div className="flex flex-wrap gap-1">
-                        {LABEL_COLORS.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            onClick={() => setNewLabelColor(c)}
-                            className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110"
-                            style={{
-                              backgroundColor: c,
-                              borderColor:
-                                newLabelColor === c ? "white" : "transparent",
-                              outline:
-                                newLabelColor === c ? `2px solid ${c}` : "none",
-                            }}
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <input
+                            type="text"
+                            placeholder="ชื่อ label..."
+                            value={newLabelName}
+                            onChange={(e) => setNewLabelName(e.target.value)}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleCreateLabel()
+                            }
+                            className="flex-1 text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
-                        ))}
-                      </div>
-                      <div className="flex gap-1">
-                        <input
-                          type="text"
-                          placeholder="ชื่อ label..."
-                          value={newLabelName}
-                          onChange={(e) => setNewLabelName(e.target.value)}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleCreateLabel()
-                          }
-                          className="flex-1 text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleCreateLabel}
-                          disabled={!newLabelName.trim()}
-                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-40"
-                        >
-                          สร้าง
-                        </button>
+                          <button
+                            type="button"
+                            onClick={handleCreateLabel}
+                            disabled={!newLabelName.trim()}
+                            className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-40"
+                          >
+                            สร้าง
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -540,7 +576,7 @@ export default function TicketModal({
         </div>
 
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-          {isEdit ? (
+          {isEdit && canEdit ? (
             <button
               onClick={() => {
                 if (confirm("Delete this ticket?")) onDelete(ticket.id);
@@ -557,15 +593,21 @@ export default function TicketModal({
               onClick={onClose}
               className="text-sm text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             >
-              Cancel
+              {isEdit && !canEdit ? "Close" : "Cancel"}
             </button>
-            <button
-              onClick={handleSave}
-              disabled={!form.title.trim() || saving}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {saving ? "Saving..." : isEdit ? "Save changes" : "Create ticket"}
-            </button>
+            {canEdit && (
+              <button
+                onClick={handleSave}
+                disabled={!form.title.trim() || saving}
+                className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {saving
+                  ? "Saving..."
+                  : isEdit
+                    ? "Save changes"
+                    : "Create ticket"}
+              </button>
+            )}
           </div>
         </div>
       </div>

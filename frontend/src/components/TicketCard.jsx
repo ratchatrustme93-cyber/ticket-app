@@ -85,11 +85,23 @@ function CalIcon() {
   );
 }
 
-export default function TicketCard({ ticket, index, onClick, onStatusChange }) {
+export default function TicketCard({
+  ticket,
+  index,
+  onClick,
+  onStatusChange,
+  currentUser,
+}) {
   const actions = QUICK_ACTIONS[ticket.status] || [];
+  const canEdit =
+    currentUser?.role === "ADMIN" || ticket.creatorId === currentUser?.id;
 
   return (
-    <Draggable draggableId={String(ticket.id)} index={index}>
+    <Draggable
+      draggableId={String(ticket.id)}
+      index={index}
+      isDragDisabled={!canEdit}
+    >
       {(provided, snapshot) => {
         const card = (
           <div
@@ -99,7 +111,9 @@ export default function TicketCard({ ticket, index, onClick, onStatusChange }) {
             className={`bg-white rounded-lg border p-3 select-none transition-shadow ${
               snapshot.isDragging
                 ? "shadow-xl border-blue-300 rotate-1 cursor-grabbing"
-                : "border-gray-200 hover:shadow-md hover:border-gray-300 cursor-grab"
+                : canEdit
+                  ? "border-gray-200 hover:shadow-md hover:border-gray-300 cursor-grab"
+                  : "border-gray-200 hover:shadow-md cursor-default"
             }`}
             onClick={snapshot.isDragging ? undefined : onClick}
           >
@@ -142,18 +156,19 @@ export default function TicketCard({ ticket, index, onClick, onStatusChange }) {
 
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
               <div className="flex items-center gap-2 flex-wrap">
-                {actions.map((action) => (
-                  <button
-                    key={action.next}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusChange(ticket.id, action.next);
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                  >
-                    {action.label}
-                  </button>
-                ))}
+                {canEdit &&
+                  actions.map((action) => (
+                    <button
+                      key={action.next}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStatusChange(ticket.id, action.next);
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                    >
+                      {action.label}
+                    </button>
+                  ))}
                 {ticket.notes?.length > 0 && (
                   <span className="text-xs text-gray-300">
                     {ticket.notes.length} note

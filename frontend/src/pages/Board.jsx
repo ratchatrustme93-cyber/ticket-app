@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import KanbanColumn from "../components/KanbanColumn";
 import TicketModal from "../components/TicketModal";
 
 const STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "DONE"];
 
 export default function Board() {
+  const { user: currentUser } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [users, setUsers] = useState([]);
   const [labels, setLabels] = useState([]);
@@ -138,6 +140,11 @@ export default function Board() {
     setSelectedTicket(res.data);
   };
 
+  const canEditTicket = (ticket) =>
+    !ticket ||
+    currentUser?.role === "ADMIN" ||
+    ticket.creatorId === currentUser?.id;
+
   const handleLabelCreated = (label) => {
     setLabels((prev) =>
       [...prev, label].sort((a, b) => a.name.localeCompare(b.name)),
@@ -249,6 +256,7 @@ export default function Board() {
                 tickets={ticketsByStatus(status)}
                 onTicketClick={handleTicketClick}
                 onStatusChange={handleStatusChange}
+                currentUser={currentUser}
               />
             ))}
           </div>
@@ -260,6 +268,7 @@ export default function Board() {
           ticket={selectedTicket}
           users={users}
           labels={labels}
+          canEdit={canEditTicket(selectedTicket)}
           onLabelCreated={handleLabelCreated}
           onClose={() => {
             setSelectedTicket(null);

@@ -37,6 +37,7 @@ export default function KanbanColumn({
   tickets,
   onTicketClick,
   onStatusChange,
+  currentUser,
 }) {
   const s = COLUMN_STYLES[statusKey];
 
@@ -71,6 +72,7 @@ export default function KanbanColumn({
                 index={index}
                 onClick={() => onTicketClick(ticket)}
                 onStatusChange={onStatusChange}
+                currentUser={currentUser}
               />
             ))}
             {provided.placeholder}

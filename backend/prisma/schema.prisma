@@ -12,6 +12,7 @@ model User {
   email     String   @unique
   name      String
   password  String
+  role      Role     @default(USER)
   createdAt DateTime @default(now())
 
   createdTickets  Ticket[]   @relation("CreatedBy")
@@ -85,6 +86,11 @@ model Activity {
 
   userId Int
   user   User @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum Status {

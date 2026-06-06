@@ -39,6 +39,9 @@ exports.updateLabel = async (req, res) => {
 };
 
 exports.deleteLabel = async (req, res) => {
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({ error: "Admin only" });
+  }
   try {
     await prisma.label.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });

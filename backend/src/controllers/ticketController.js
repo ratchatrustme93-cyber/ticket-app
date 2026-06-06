@@ -105,6 +105,10 @@ exports.updateTicket = async (req, res) => {
       include: { assignee: { select: { name: true } } },
     });
 
+    if (req.user.id !== existing.creatorId && req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Permission denied" });
+    }
+
     const activityData = [];
 
     if (status !== undefined && status !== existing.status) {
@@ -182,6 +186,13 @@ exports.updateTicket = async (req, res) => {
 
 exports.deleteTicket = async (req, res) => {
   try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: parseInt(req.params.id) },
+    });
+    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+    if (req.user.id !== ticket.creatorId && req.user.role !== "ADMIN") {
+      return res.status(403).json({ error: "Permission denied" });
+    }
     await prisma.ticket.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
   } catch (err) {
