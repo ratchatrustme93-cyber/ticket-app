@@ -91,10 +91,15 @@ export default function TicketCard({
   onClick,
   onStatusChange,
   currentUser,
+  selected,
+  onToggleSelect,
 }) {
   const actions = QUICK_ACTIONS[ticket.status] || [];
   const canEdit =
     currentUser?.role === "ADMIN" || ticket.creatorId === currentUser?.id;
+
+  const subtaskTotal = ticket.subtasks?.length ?? 0;
+  const subtaskDone = ticket.subtasks?.filter((s) => s.completed).length ?? 0;
 
   return (
     <Draggable
@@ -111,13 +116,27 @@ export default function TicketCard({
             className={`bg-white rounded-lg border p-3 select-none transition-shadow ${
               snapshot.isDragging
                 ? "shadow-xl border-blue-300 rotate-1 cursor-grabbing"
-                : canEdit
-                  ? "border-gray-200 hover:shadow-md hover:border-gray-300 cursor-grab"
-                  : "border-gray-200 hover:shadow-md cursor-default"
+                : selected
+                  ? "border-blue-400 ring-2 ring-blue-200"
+                  : canEdit
+                    ? "border-gray-200 hover:shadow-md hover:border-gray-300 cursor-grab"
+                    : "border-gray-200 hover:shadow-md cursor-default"
             }`}
             onClick={snapshot.isDragging ? undefined : onClick}
           >
             <div className="flex items-start gap-2 mb-2">
+              {/* Bulk select checkbox */}
+              <input
+                type="checkbox"
+                checked={selected ?? false}
+                onChange={() => {}}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSelect?.(ticket.id);
+                }}
+                className="mt-0.5 w-3.5 h-3.5 rounded accent-blue-600 shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ opacity: selected ? 1 : undefined }}
+              />
               <p className="text-sm font-medium text-gray-800 leading-snug flex-1">
                 {ticket.title}
               </p>
@@ -154,6 +173,37 @@ export default function TicketCard({
               </div>
             )}
 
+            {/* Subtask progress */}
+            {subtaskTotal > 0 && (
+              <div className="mb-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <svg
+                    className="w-3 h-3 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <polyline points="9 11 12 14 22 4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+                    />
+                  </svg>
+                  <span className="text-xs text-gray-400">
+                    {subtaskDone}/{subtaskTotal}
+                  </span>
+                </div>
+                <div className="h-1 bg-gray-100 rounded-full">
+                  <div
+                    className="h-full bg-green-400 rounded-full transition-all"
+                    style={{ width: `${(subtaskDone / subtaskTotal) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
               <div className="flex items-center gap-2 flex-wrap">
                 {canEdit &&
@@ -184,8 +234,11 @@ export default function TicketCard({
               </div>
               {ticket.assignee && (
                 <div className="flex items-center gap-1 shrink-0 ml-1">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-xs text-blue-600 font-medium">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: ticket.assignee.color || "#6B7280" }}
+                  >
+                    <span className="text-xs text-white font-medium">
                       {ticket.assignee.name[0].toUpperCase()}
                     </span>
                   </div>

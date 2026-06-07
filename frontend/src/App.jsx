@@ -6,6 +6,7 @@ import Board from "./pages/Board";
 import Daily from "./pages/Daily";
 import Calendar from "./pages/Calendar";
 import Notes from "./pages/Notes";
+import AdminUsers from "./pages/AdminUsers";
 import Layout from "./components/Layout";
 
 function ProtectedRoute({ children }) {
@@ -41,6 +42,7 @@ function AppRoutes() {
         <Route path="daily" element={<Daily />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="notes" element={<Notes />} />
+        <Route path="admin/users" element={<AdminUsers />} />
       </Route>
     </Routes>
   );

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,6 +19,26 @@ const STATUS_TH = {
   DONE: "Done",
 };
 
+const RELATION_LABEL = {
+  blocks: "blocks",
+  relates_to: "relates to",
+  duplicate_of: "duplicate of",
+};
+
+const REVERSE_RELATION_LABEL = {
+  blocks: "blocked by",
+  relates_to: "relates to",
+  duplicate_of: "duplicate of",
+};
+
+const STATUS_BADGE = {
+  TODO: "bg-gray-100 text-gray-600",
+  IN_PROGRESS: "bg-blue-100 text-blue-700",
+  BLOCKED: "bg-red-100 text-red-600",
+  DONE: "bg-green-100 text-green-700",
+};
+
+// color
 const LABEL_COLORS = [
   "#EF4444",
   "#F97316",
@@ -29,6 +51,62 @@ const LABEL_COLORS = [
   "#EC4899",
   "#6B7280",
 ];
+
+const mdComponents = {
+  h1: ({ children }) => (
+    <h1 className="text-base font-bold mb-1">{children}</h1>
+  ),
+  h2: ({ children }) => <h2 className="text-sm font-bold mb-1">{children}</h2>,
+  h3: ({ children }) => (
+    <h3 className="text-sm font-semibold mb-0.5">{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p className="text-sm text-gray-700 mb-1 last:mb-0">{children}</p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-inside text-sm text-gray-700 mb-1 space-y-0.5">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-inside text-sm text-gray-700 mb-1 space-y-0.5">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="text-sm">{children}</li>,
+  pre: ({ children }) => (
+    <pre className="bg-gray-100 p-2 rounded text-xs font-mono overflow-auto mb-1 whitespace-pre-wrap">
+      {children}
+    </pre>
+  ),
+  code: ({ children, className }) => (
+    <code
+      className={`${!className ? "bg-gray-100 px-1 py-0.5 rounded" : ""} text-xs font-mono`}
+    >
+      {children}
+    </code>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-gray-300 pl-3 text-gray-500 text-sm italic mb-1">
+      {children}
+    </blockquote>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      className="text-blue-600 underline"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {children}
+    </a>
+  ),
+  hr: () => <hr className="border-gray-200 my-2" />,
+};
 
 function relativeTime(iso) {
   const diff = (Date.now() - new Date(iso)) / 1000;
@@ -63,8 +141,11 @@ function getActivityText(a) {
 function ActivityItem({ activity: a }) {
   return (
     <div className="flex items-start gap-2">
-      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-        <span className="text-xs text-gray-500 font-medium">
+      <div
+        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+        style={{ backgroundColor: a.user.color || "#6B7280" }}
+      >
+        <span className="text-xs text-white font-medium">
           {a.user.name[0].toUpperCase()}
         </span>
       </div>
@@ -76,6 +157,23 @@ function ActivityItem({ activity: a }) {
         {relativeTime(a.createdAt)}
       </span>
     </div>
+  );
+}
+
+function NoteContent({ content }) {
+  const parts = content.split(/(@\w[\w.]*)/g);
+  return (
+    <p className="text-sm text-gray-600 ml-7 whitespace-pre-wrap">
+      {parts.map((part, i) =>
+        part.startsWith("@") ? (
+          <span key={i} className="text-blue-600 font-medium">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </p>
   );
 }
 
@@ -105,15 +203,29 @@ export default function TicketModal({
   const [ticketData, setTicketData] = useState(ticket);
   const [noteInput, setNoteInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [descPreview, setDescPreview] = useState(false);
 
-  // Label picker state
+  // Label picker
   const [labelPickerOpen, setLabelPickerOpen] = useState(false);
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#3B82F6");
   const labelPickerRef = useRef(null);
 
-  // Activity state
+  // Activity
   const [showAllActivity, setShowAllActivity] = useState(false);
+
+  // Subtask
+  const [subtaskInput, setSubtaskInput] = useState("");
+
+  // Relations
+  const [newRelType, setNewRelType] = useState("relates_to");
+  const [newRelTicketId, setNewRelTicketId] = useState("");
+  const [relError, setRelError] = useState("");
+
+  // @mention autocomplete
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const noteRef = useRef(null);
 
   useEffect(() => {
     if (ticket) {
@@ -145,6 +257,12 @@ export default function TicketModal({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [labelPickerOpen]);
 
+  const refreshTicket = async () => {
+    const res = await api.get(`/tickets/${ticket.id}`);
+    setTicketData(res.data);
+    onRefresh();
+  };
+
   const toggleLabel = (labelId) => {
     setForm((p) => ({
       ...p,
@@ -165,7 +283,7 @@ export default function TicketModal({
       setForm((p) => ({ ...p, labelIds: [...p.labelIds, res.data.id] }));
       setNewLabelName("");
     } catch {
-      // duplicate name — ignore silently
+      // duplicate name — ignore
     }
   };
 
@@ -179,28 +297,99 @@ export default function TicketModal({
     }
   };
 
+  // Notes + @mention
+  const handleNoteChange = (e) => {
+    const val = e.target.value;
+    setNoteInput(val);
+    const words = val.split(/\s/);
+    const last = words[words.length - 1];
+    if (last.startsWith("@")) {
+      setMentionSearch(last.slice(1).toLowerCase());
+      setMentionOpen(true);
+    } else {
+      setMentionOpen(false);
+    }
+  };
+
+  const handleMentionSelect = (name) => {
+    const words = noteInput.split(/\s/);
+    words[words.length - 1] = `@${name}`;
+    setNoteInput(words.join(" ") + " ");
+    setMentionOpen(false);
+    noteRef.current?.focus();
+  };
+
+  const filteredMentions = users?.filter(
+    (u) =>
+      mentionSearch === "" ||
+      u.name.toLowerCase().includes(mentionSearch) ||
+      u.email.toLowerCase().includes(mentionSearch),
+  );
+
   const handleAddNote = async () => {
     if (!noteInput.trim()) return;
     await api.post(`/tickets/${ticket.id}/notes`, {
       content: noteInput.trim(),
     });
     setNoteInput("");
-    const res = await api.get(`/tickets/${ticket.id}`);
-    setTicketData(res.data);
-    onRefresh();
+    setMentionOpen(false);
+    await refreshTicket();
   };
 
   const handleDeleteNote = async (noteId) => {
     await api.delete(`/tickets/${ticket.id}/notes/${noteId}`);
-    const res = await api.get(`/tickets/${ticket.id}`);
-    setTicketData(res.data);
-    onRefresh();
+    await refreshTicket();
+  };
+
+  // Subtasks
+  const handleAddSubtask = async () => {
+    if (!subtaskInput.trim()) return;
+    await api.post(`/tickets/${ticket.id}/subtasks`, {
+      title: subtaskInput.trim(),
+    });
+    setSubtaskInput("");
+    await refreshTicket();
+  };
+
+  const handleToggleSubtask = async (subtask) => {
+    await api.patch(`/tickets/${ticket.id}/subtasks/${subtask.id}`, {
+      completed: !subtask.completed,
+    });
+    await refreshTicket();
+  };
+
+  const handleDeleteSubtask = async (subtaskId) => {
+    await api.delete(`/tickets/${ticket.id}/subtasks/${subtaskId}`);
+    await refreshTicket();
+  };
+
+  // Relations
+  const handleAddRelation = async () => {
+    setRelError("");
+    if (!newRelTicketId.trim()) return;
+    try {
+      await api.post(`/tickets/${ticket.id}/relations`, {
+        toId: parseInt(newRelTicketId),
+        type: newRelType,
+      });
+      setNewRelTicketId("");
+      await refreshTicket();
+    } catch (err) {
+      setRelError(err.response?.data?.error || "Failed to add relation");
+    }
+  };
+
+  const handleDeleteRelation = async (relationId) => {
+    await api.delete(`/tickets/${ticket.id}/relations/${relationId}`);
+    await refreshTicket();
   };
 
   const activities = ticketData?.activities || [];
   const visibleActivities = showAllActivity
     ? activities
     : activities.slice(0, 5);
+  const subtasks = ticketData?.subtasks || [];
+  const subtaskDone = subtasks.filter((s) => s.completed).length;
 
   return (
     <div
@@ -263,21 +452,52 @@ export default function TicketModal({
             />
           </div>
 
-          {/* Description */}
+          {/* Description with Markdown preview */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Description
-            </label>
-            <textarea
-              placeholder="Add more details (optional)"
-              value={form.description}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, description: e.target.value }))
-              }
-              rows={3}
-              readOnly={!canEdit}
-              className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none resize-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500 cursor-default"}`}
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-gray-600">
+                Description
+              </label>
+              {canEdit && form.description && (
+                <button
+                  type="button"
+                  onClick={() => setDescPreview((p) => !p)}
+                  className="text-xs text-blue-500 hover:text-blue-700 transition"
+                >
+                  {descPreview ? "Edit" : "Preview"}
+                </button>
+              )}
+            </div>
+            {descPreview && canEdit ? (
+              <div className="min-h-[80px] border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 prose-sm">
+                {form.description ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={mdComponents}
+                  >
+                    {form.description}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="text-xs text-gray-400">No description</p>
+                )}
+              </div>
+            ) : (
+              <textarea
+                placeholder="Add more details... (supports Markdown)"
+                value={form.description}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, description: e.target.value }))
+                }
+                rows={3}
+                readOnly={!canEdit}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none resize-none ${canEdit ? "focus:ring-2 focus:ring-blue-500" : "bg-gray-50 text-gray-500 cursor-default"}`}
+              />
+            )}
+            {canEdit && !descPreview && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Supports **bold**, *italic*, `code`, lists
+              </p>
+            )}
           </div>
 
           {/* Status / Priority / Assignee / Due Date */}
@@ -368,17 +588,18 @@ export default function TicketModal({
                   <button
                     key={id}
                     type="button"
-                    onClick={() => toggleLabel(id)}
+                    onClick={() => canEdit && toggleLabel(id)}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white hover:opacity-80 transition"
                     style={{ backgroundColor: label.color }}
                   >
                     {label.name}
-                    <span className="opacity-70 text-sm leading-none">×</span>
+                    {canEdit && (
+                      <span className="opacity-70 text-sm leading-none">×</span>
+                    )}
                   </button>
                 ) : null;
               })}
 
-              {/* Picker trigger — only for editors */}
               {canEdit && (
                 <div className="relative" ref={labelPickerRef}>
                   <button
@@ -391,7 +612,6 @@ export default function TicketModal({
 
                   {labelPickerOpen && (
                     <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-2">
-                      {/* Available labels */}
                       <div className="max-h-36 overflow-y-auto">
                         {(labels || [])
                           .filter((l) => !form.labelIds.includes(l.id))
@@ -422,8 +642,6 @@ export default function TicketModal({
                           </p>
                         )}
                       </div>
-
-                      {/* Create new label */}
                       <div className="border-t border-gray-100 mt-1 pt-2 px-1 space-y-1.5">
                         <div className="flex flex-wrap gap-1">
                           {LABEL_COLORS.map((c) => (
@@ -472,9 +690,192 @@ export default function TicketModal({
             </div>
           </div>
 
+          {/* Subtasks */}
+          {isEdit && (
+            <div className="pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Subtasks
+                </h3>
+                {subtasks.length > 0 && (
+                  <span className="text-xs text-gray-400">
+                    {subtaskDone}/{subtasks.length} done
+                  </span>
+                )}
+              </div>
+
+              {subtasks.length > 0 && (
+                <div className="h-1.5 bg-gray-100 rounded-full mb-3">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all"
+                    style={{
+                      width: `${(subtaskDone / subtasks.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5 mb-2">
+                {subtasks.map((subtask) => (
+                  <div
+                    key={subtask.id}
+                    className="flex items-center gap-2 group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={subtask.completed}
+                      onChange={() => handleToggleSubtask(subtask)}
+                      className="w-3.5 h-3.5 rounded accent-blue-600 cursor-pointer shrink-0"
+                    />
+                    <span
+                      className={`flex-1 text-sm ${
+                        subtask.completed
+                          ? "line-through text-gray-400"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {subtask.title}
+                    </span>
+                    {canEdit && (
+                      <button
+                        onClick={() => handleDeleteSubtask(subtask.id)}
+                        className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition text-base leading-none"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {subtasks.length === 0 && (
+                  <p className="text-xs text-gray-400">No subtasks yet.</p>
+                )}
+              </div>
+
+              {canEdit && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add a subtask..."
+                    value={subtaskInput}
+                    onChange={(e) => setSubtaskInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddSubtask()}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={handleAddSubtask}
+                    disabled={!subtaskInput.trim()}
+                    className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Relations */}
+          {isEdit && (
+            <div className="pt-3 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Relations
+              </h3>
+
+              <div className="space-y-1.5 mb-2">
+                {(ticketData?.relationsFrom || []).map((rel) => (
+                  <div key={rel.id} className="flex items-center gap-2 text-xs">
+                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">
+                      {RELATION_LABEL[rel.type]}
+                    </span>
+                    <span className="text-blue-600 shrink-0">#{rel.to.id}</span>
+                    <span className="text-gray-700 truncate">
+                      {rel.to.title}
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded shrink-0 ${STATUS_BADGE[rel.to.status]}`}
+                    >
+                      {STATUS_TH[rel.to.status]}
+                    </span>
+                    {canEdit && (
+                      <button
+                        onClick={() => handleDeleteRelation(rel.id)}
+                        className="ml-auto text-gray-300 hover:text-red-400 transition shrink-0"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {(ticketData?.relationsTo || []).map((rel) => (
+                  <div
+                    key={`to-${rel.id}`}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">
+                      {REVERSE_RELATION_LABEL[rel.type]}
+                    </span>
+                    <span className="text-blue-600 shrink-0">
+                      #{rel.from.id}
+                    </span>
+                    <span className="text-gray-700 truncate">
+                      {rel.from.title}
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded shrink-0 ${STATUS_BADGE[rel.from.status]}`}
+                    >
+                      {STATUS_TH[rel.from.status]}
+                    </span>
+                  </div>
+                ))}
+                {!ticketData?.relationsFrom?.length &&
+                  !ticketData?.relationsTo?.length && (
+                    <p className="text-xs text-gray-400">No relations.</p>
+                  )}
+              </div>
+
+              {canEdit && (
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <select
+                      value={newRelType}
+                      onChange={(e) => setNewRelType(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="blocks">Blocks</option>
+                      <option value="relates_to">Relates to</option>
+                      <option value="duplicate_of">Duplicate of</option>
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Ticket #ID"
+                      value={newRelTicketId}
+                      onChange={(e) => {
+                        setNewRelTicketId(e.target.value);
+                        setRelError("");
+                      }}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleAddRelation()
+                      }
+                      className="w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={handleAddRelation}
+                      disabled={!newRelTicketId}
+                      className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-200 transition disabled:opacity-40"
+                    >
+                      Link
+                    </button>
+                  </div>
+                  {relError && (
+                    <p className="text-xs text-red-500">{relError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Notes section */}
           {isEdit && (
-            <div className="pt-2">
+            <div className="pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-700">
                   Notes & Issues
@@ -497,8 +898,13 @@ export default function TicketModal({
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-xs text-blue-600 font-medium">
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor: note.user.color || "#6B7280",
+                          }}
+                        >
+                          <span className="text-xs text-white font-medium">
                             {note.user.name[0].toUpperCase()}
                           </span>
                         </div>
@@ -523,27 +929,60 @@ export default function TicketModal({
                         </button>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 ml-7">{note.content}</p>
+                    <NoteContent content={note.content} />
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Add a note or describe a blocker..."
-                  value={noteInput}
-                  onChange={(e) => setNoteInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleAddNote}
-                  disabled={!noteInput.trim()}
-                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-40"
-                >
-                  Add
-                </button>
+              <div className="relative">
+                <div className="flex gap-2">
+                  <input
+                    ref={noteRef}
+                    type="text"
+                    placeholder="Add a note... (type @ to mention)"
+                    value={noteInput}
+                    onChange={handleNoteChange}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !mentionOpen) handleAddNote();
+                      if (e.key === "Escape") setMentionOpen(false);
+                    }}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={!noteInput.trim()}
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* @mention dropdown */}
+                {mentionOpen && filteredMentions?.length > 0 && (
+                  <div className="absolute bottom-full mb-1 left-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1 max-h-40 overflow-y-auto">
+                    {filteredMentions.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleMentionSelect(u.name);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-gray-50 text-left"
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: u.color || "#6B7280" }}
+                        >
+                          <span className="text-xs text-white font-medium">
+                            {u.name[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-700">{u.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

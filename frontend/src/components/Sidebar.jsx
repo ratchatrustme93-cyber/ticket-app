@@ -1,5 +1,7 @@
+import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 const NAV_ITEMS = [
   {
@@ -84,9 +86,66 @@ const NAV_ITEMS = [
   },
 ];
 
+const USER_COLORS = [
+  "#EF4444",
+  "#F97316",
+  "#EAB308",
+  "#22C55E",
+  "#10B981",
+  "#06B6D4",
+  "#3B82F6",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#F59E0B",
+  "#6B7280",
+];
+
+function ColorPicker({ current, onSelect, onClose }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handle(e) {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-44 z-50"
+    >
+      <p className="text-xs font-medium text-gray-600 mb-2">เลือกสีของคุณ</p>
+      <div className="flex flex-wrap gap-1.5">
+        {USER_COLORS.map((c) => (
+          <button
+            key={c}
+            onClick={() => onSelect(c)}
+            className="w-6 h-6 rounded-full transition-transform hover:scale-110 border-2"
+            style={{
+              backgroundColor: c,
+              borderColor: current === c ? "white" : "transparent",
+              outline: current === c ? `2px solid ${c}` : "none",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+
+  const handleColorSelect = async (color) => {
+    setColorPickerOpen(false);
+    await api.patch("/auth/me", { color });
+    updateUser({ color });
+  };
 
   return (
     <aside className="w-52 h-screen bg-white border-r border-gray-200 flex flex-col shrink-0">
@@ -117,15 +176,61 @@ export default function Sidebar() {
             {item.label}
           </NavLink>
         ))}
+
+        {user?.role === "ADMIN" && (
+          <div className="pt-2 border-t border-gray-100 mt-2">
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                }`
+              }
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+              Users
+            </NavLink>
+          </div>
+        )}
       </nav>
 
       <div className="p-3 border-t border-gray-100">
         <div className="flex items-center gap-2 px-1 mb-2">
-          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-            <span className="text-xs text-blue-600 font-semibold">
-              {user?.name?.[0]?.toUpperCase()}
-            </span>
+          {/* Avatar — click to open color picker */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setColorPickerOpen((p) => !p)}
+              title="เปลี่ยนสี"
+              className="w-7 h-7 rounded-full flex items-center justify-center ring-2 ring-white hover:ring-gray-300 transition-all"
+              style={{ backgroundColor: user?.color || "#6B7280" }}
+            >
+              <span className="text-xs text-white font-semibold">
+                {user?.name?.[0]?.toUpperCase()}
+              </span>
+            </button>
+            {colorPickerOpen && (
+              <ColorPicker
+                current={user?.color}
+                onSelect={handleColorSelect}
+                onClose={() => setColorPickerOpen(false)}
+              />
+            )}
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-semibold text-gray-800 truncate">

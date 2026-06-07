@@ -13,6 +13,7 @@ model User {
   name      String
   password  String
   role      Role     @default(USER)
+  color     String   @default("#6B7280")
   createdAt DateTime @default(now())
 
   createdTickets  Ticket[]   @relation("CreatedBy")
@@ -57,9 +58,35 @@ model Ticket {
   assigneeId Int?
   assignee   User? @relation("AssignedTo", fields: [assigneeId], references: [id])
 
-  notes      Note[]
-  labels     Label[]    @relation("TicketLabels")
-  activities Activity[]
+  notes          Note[]
+  labels         Label[]          @relation("TicketLabels")
+  activities     Activity[]
+  subtasks       Subtask[]
+  relationsFrom  TicketRelation[] @relation("RelationFrom")
+  relationsTo    TicketRelation[] @relation("RelationTo")
+}
+
+model Subtask {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  position  Float    @default(0)
+  createdAt DateTime @default(now())
+
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketRelation {
+  id   Int    @id @default(autoincrement())
+  type String
+
+  fromId Int
+  from   Ticket @relation("RelationFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId   Int
+  to     Ticket @relation("RelationTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model Note {

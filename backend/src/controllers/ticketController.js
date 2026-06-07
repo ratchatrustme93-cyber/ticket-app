@@ -3,21 +3,30 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const ticketInclude = {
-  creator: { select: { id: true, name: true, email: true } },
-  assignee: { select: { id: true, name: true, email: true } },
+  creator: { select: { id: true, name: true, email: true, color: true } },
+  assignee: { select: { id: true, name: true, email: true, color: true } },
   labels: { orderBy: { name: "asc" } },
   notes: {
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, color: true } } },
     orderBy: { createdAt: "asc" },
   },
+  subtasks: { orderBy: { position: "asc" } },
 };
 
 const ticketDetailInclude = {
   ...ticketInclude,
   activities: {
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, color: true } } },
     orderBy: { createdAt: "desc" },
     take: 50,
+  },
+  relationsFrom: {
+    include: { to: { select: { id: true, title: true, status: true } } },
+    orderBy: { createdAt: "asc" },
+  },
+  relationsTo: {
+    include: { from: { select: { id: true, title: true, status: true } } },
+    orderBy: { createdAt: "asc" },
   },
 };
 

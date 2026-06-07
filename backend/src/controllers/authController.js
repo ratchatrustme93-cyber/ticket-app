@@ -16,6 +16,7 @@ const safeUser = (u) => ({
   name: u.name,
   email: u.email,
   role: u.role,
+  color: u.color,
 });
 
 exports.register = async (req, res) => {
@@ -29,7 +30,6 @@ exports.register = async (req, res) => {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(400).json({ error: "Email already in use" });
 
-    // First user ever registered becomes ADMIN
     const userCount = await prisma.user.count();
     const role = userCount === 0 ? "ADMIN" : "USER";
 
@@ -60,7 +60,21 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, color: true },
   });
   res.json(user);
+};
+
+exports.updateMe = async (req, res) => {
+  const { color } = req.body;
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { ...(color && { color }) },
+      select: { id: true, name: true, email: true, role: true, color: true },
+    });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
