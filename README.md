@@ -1,108 +1,108 @@
 # Ticket App
 
-Kanban-style task tracker for small teams. Built for self-hosting on a local server.
+ระบบจัดการงานแบบ Kanban สำหรับทีมขนาดเล็ก รันบนเซิร์ฟเวอร์ภายในองค์กร
 
-## Features
+## ฟีเจอร์
 
-### Board
-- **Kanban Board** — drag-and-drop cards across TODO / In Progress / Blocked / Done, reorder within columns
-- **WIP Limits** — set a max ticket count per column; header turns red and shows a warning when exceeded (stored per-browser)
-- **Bulk Actions** — select multiple tickets via checkboxes → change status, assign, or delete in one step
-- **Keyboard Shortcuts** — `N` new ticket · `?` shortcut help · `Esc` deselect all
-- **Filter Persistence** — search / assignee / label filters are saved in the URL (shareable links)
-- **Global Search** — instant client-side search across title and description
-- **CSV Export** — download the current filtered ticket list as a spreadsheet
+### บอร์ด
+- **Kanban Board** — ลากการ์ดข้ามคอลัมน์ TODO / กำลังทำ / ติดขัด / เสร็จแล้ว และเรียงลำดับภายในคอลัมน์ได้
+- **WIP Limit** — กำหนดจำนวน ticket สูงสุดต่อคอลัมน์ หัวคอลัมน์จะเปลี่ยนเป็นสีแดงเมื่อเกิน (บันทึกต่อเบราว์เซอร์)
+- **Bulk Actions** — เลือกหลาย ticket พร้อมกันผ่าน checkbox แล้วเปลี่ยน status / assignee / ลบทีเดียว
+- **Keyboard Shortcuts** — `N` สร้าง ticket · `?` ดู shortcut ทั้งหมด · `Esc` ยกเลิกการเลือก
+- **Filter ใน URL** — ตัวกรอง search / assignee / label ถูกบันทึกใน URL สามารถแชร์ลิงก์ได้
+- **ค้นหาแบบ real-time** — ค้นหาจาก title และ description ทันทีโดยไม่ต้องโหลดหน้าใหม่
+- **Export CSV** — ดาวน์โหลด ticket ที่กำลังแสดงอยู่เป็นไฟล์ spreadsheet
 
-### Tickets
-- **Fields** — title, description (Markdown), status, priority, assignee, due date, labels
-- **Subtasks** — checklist inside a ticket with progress bar; completion shown on the card
-- **Relations** — link tickets as *blocks*, *relates to*, or *duplicate of*
-- **Notes** — add notes to any ticket; type `@name` to mention a teammate (autocomplete + highlight)
-- **Activity Log** — records status, priority, and assignee changes with relative timestamps
-- **Due Date Badge** — color-coded on cards: overdue=red / today=orange / ≤3 days=amber / future=gray
+### Ticket
+- **ข้อมูล** — ชื่อ, รายละเอียด (Markdown), สถานะ, ความสำคัญ, ผู้รับผิดชอบ, วันกำหนด, label
+- **Subtasks** — รายการงานย่อยพร้อม progress bar แสดงบนการ์ดด้วย
+- **Relations** — เชื่อม ticket ว่า *blocks*, *relates to* หรือ *duplicate of*
+- **Notes** — ใส่ note ใน ticket ได้ทุกคน พิมพ์ `@ชื่อ` เพื่อ mention เพื่อนร่วมทีม (autocomplete + highlight)
+- **Activity Log** — บันทึกการเปลี่ยนแปลง status, priority, assignee พร้อม timestamp
+- **Due Date Badge** — สีบนการ์ด: เกินกำหนด=แดง / วันนี้=ส้ม / ≤3 วัน=เหลือง / ปกติ=เทา
 
-### People
-- **User Colors** — each user picks a personal color; shown on all avatars across the board
-- **Roles** — first registered user is Admin; regular users can only edit their own tickets
-- **User Management** — Admin can promote/demote roles and delete accounts from the UI (no Prisma Studio needed)
-- **Multi-user** — JWT authentication, team members share the same board
+### ผู้ใช้งาน
+- **User Color** — แต่ละคนเลือกสีประจำตัวได้ แสดงบน avatar ทุกจุดในระบบ
+- **สิทธิ์** — ผู้ใช้แก้ไขได้เฉพาะ ticket ของตัวเอง Admin แก้ไขได้ทุก ticket
+- **User Management** — Admin จัดการสิทธิ์และลบบัญชีได้จาก UI โดยตรง ไม่ต้องใช้ Prisma Studio
+- **Multi-user** — ยืนยันตัวตนด้วย JWT ทุกคนในทีมใช้บอร์ดร่วมกัน
 
-### Other Pages
-- **Daily Standup** — per-person ticket summary
-- **Calendar** — monthly view with Thai public holidays and ticket due dates
-- **Notes/Memo** — standalone personal notes with pin support
-- **Markdown** — description field supports bold, italic, code, lists, blockquotes
+### หน้าอื่น ๆ
+- **Daily Standup** — สรุปงานแยกตามคนสำหรับ standup ประจำวัน
+- **ปฏิทิน** — มุมมองรายเดือน แสดงวันหยุดไทยและวันกำหนดส่งงาน
+- **Notes / Memo** — บันทึกส่วนตัว ปักหมุดได้
+- **Markdown** — รายละเอียด ticket รองรับ bold, italic, code, list, blockquote
 
-## Roles
+## สิทธิ์การใช้งาน
 
-| Action | User | Admin |
+| การกระทำ | User | Admin |
 |---|---|---|
-| Create tickets | ✅ | ✅ |
-| Edit / delete own tickets | ✅ | ✅ |
-| Edit / delete any ticket | ❌ | ✅ |
-| Drag cards on board | own only | any |
-| Add notes to any ticket | ✅ | ✅ |
-| Create labels | ✅ | ✅ |
-| Delete labels | ❌ | ✅ |
-| Manage users (promote / delete) | ❌ | ✅ |
+| สร้าง ticket | ✅ | ✅ |
+| แก้ไข / ลบ ticket ของตัวเอง | ✅ | ✅ |
+| แก้ไข / ลบ ticket ของคนอื่น | ❌ | ✅ |
+| ลาก ticket บนบอร์ด | เฉพาะของตัวเอง | ทุก ticket |
+| เพิ่ม note ใน ticket | ✅ | ✅ |
+| สร้าง label | ✅ | ✅ |
+| ลบ label | ❌ | ✅ |
+| จัดการผู้ใช้ (เพิ่มสิทธิ์ / ลบบัญชี) | ❌ | ✅ |
 
-The **first account registered** automatically becomes Admin. Additional admins can be promoted from **Sidebar → Users**.
+**บัญชีแรกที่ลงทะเบียน** จะได้สิทธิ์ Admin โดยอัตโนมัติ Admin เพิ่มเติมสามารถตั้งได้จาก **Sidebar → Users**
 
 ## Tech Stack
 
-| Layer | Technology |
+| ส่วน | เทคโนโลยี |
 |---|---|
 | Backend | Node.js, Express |
 | ORM | Prisma |
-| Database | PostgreSQL |
+| ฐานข้อมูล | PostgreSQL |
 | Frontend | React 18, Vite |
 | Styling | Tailwind CSS |
 | Drag & Drop | @hello-pangea/dnd |
 | Markdown | react-markdown + remark-gfm |
-| Auth | JWT (7-day expiry, localStorage) |
+| Auth | JWT (หมดอายุ 7 วัน, เก็บใน localStorage) |
 
-## Prerequisites
+## ความต้องการของระบบ
 
 - Node.js 18+
-- PostgreSQL (running locally)
+- PostgreSQL (รันอยู่บนเครื่อง)
 
-## Setup
+## วิธีติดตั้ง
 
-**1. Clone and install**
+**1. Clone และติดตั้ง dependencies**
 ```bash
 git clone <repo-url>
 cd ticket-app
 npm run install:all
 ```
 
-**2. Configure backend**
+**2. ตั้งค่า backend**
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Edit `backend/.env`:
+แก้ไขไฟล์ `backend/.env`:
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/ticketapp"
-JWT_SECRET="replace-with-a-long-random-string"
+JWT_SECRET="ใส่ random string ยาว ๆ ตรงนี้"
 PORT=3000
 FRONTEND_URL="http://localhost:5173"
 ```
 
-**3. Create the database**
+**3. สร้างฐานข้อมูล**
 ```bash
 createdb ticketapp
 ```
 
-**4. Push schema to database**
+**4. สร้างตารางในฐานข้อมูล**
 ```bash
 cd backend
 npm run db:push
 ```
 
-**5. Run development servers**
+**5. รัน development server**
 
-In two separate terminals:
+เปิด terminal 2 หน้า:
 ```bash
 # Terminal 1
 npm run backend
@@ -111,105 +111,105 @@ npm run backend
 npm run frontend
 ```
 
-Open http://localhost:5173 and register — the first account created is automatically Admin.
+เปิด http://localhost:5173 แล้วลงทะเบียน — บัญชีแรกจะได้สิทธิ์ Admin ทันที
 
-## Project Structure
+## โครงสร้างโปรเจค
 
 ```
 ticket-app/
 ├── backend/
 │   ├── prisma/
-│   │   └── schema.prisma            # User, Ticket, Note, Subtask, TicketRelation, Label, Activity, Memo
+│   │   └── schema.prisma            # โมเดล: User, Ticket, Subtask, TicketRelation, Note, Label, Activity, Memo
 │   └── src/
 │       ├── controllers/
-│       │   ├── authController.js    # Register, login, /me, PATCH /me (user color)
-│       │   ├── ticketController.js  # CRUD + notes + activity logging
-│       │   ├── subtaskController.js # Subtask CRUD
-│       │   ├── relationController.js# Ticket relation CRUD
-│       │   ├── labelController.js   # Label CRUD (delete: admin only)
-│       │   ├── memoController.js    # Standalone user notes
-│       │   └── userController.js    # List users, update role, delete (admin)
+│       │   ├── authController.js    # Register, login, /me, PATCH /me (สี user)
+│       │   ├── ticketController.js  # CRUD + notes + บันทึก activity
+│       │   ├── subtaskController.js # CRUD subtask
+│       │   ├── relationController.js# CRUD ticket relation
+│       │   ├── labelController.js   # CRUD label (ลบ: admin เท่านั้น)
+│       │   ├── memoController.js    # บันทึกส่วนตัว
+│       │   └── userController.js    # ดูรายชื่อ, เปลี่ยนสิทธิ์, ลบ (admin)
 │       ├── middleware/
-│       │   └── auth.js              # JWT verification → req.user (id, email, role)
+│       │   └── auth.js              # ตรวจสอบ JWT → req.user (id, email, role)
 │       ├── routes/
 │       └── index.js
 └── frontend/
     └── src/
         ├── components/
         │   ├── TicketCard.jsx       # Due date badge, subtask progress, label chips, bulk checkbox
-        │   ├── TicketModal.jsx      # Edit, subtasks, relations, notes (@mention), activity, markdown
-        │   ├── KanbanColumn.jsx     # WIP limit config + warning
-        │   ├── Sidebar.jsx          # Nav, admin link, user color picker
+        │   ├── TicketModal.jsx      # แก้ไข ticket, subtasks, relations, notes (@mention), activity, markdown
+        │   ├── KanbanColumn.jsx     # ตั้งค่า WIP limit + แจ้งเตือน
+        │   ├── Sidebar.jsx          # เมนู, ลิงก์ admin, เลือกสี user
         │   └── Layout.jsx
         ├── pages/
-        │   ├── Board.jsx            # Kanban + filters (URL) + bulk actions + shortcuts + CSV export
-        │   ├── AdminUsers.jsx       # User management (admin only)
-        │   ├── Daily.jsx            # Standup view
-        │   ├── Calendar.jsx         # Monthly calendar with Thai holidays
-        │   └── Notes.jsx            # Standalone memos
+        │   ├── Board.jsx            # Kanban + filter (URL) + bulk actions + shortcuts + export CSV
+        │   ├── AdminUsers.jsx       # จัดการผู้ใช้ (admin เท่านั้น)
+        │   ├── Daily.jsx            # มุมมอง standup
+        │   ├── Calendar.jsx         # ปฏิทินรายเดือนพร้อมวันหยุดไทย
+        │   └── Notes.jsx            # บันทึกส่วนตัว
         ├── context/
-        │   └── AuthContext.jsx      # user object: id, name, email, role, color
+        │   └── AuthContext.jsx      # user: id, name, email, role, color
         ├── services/
-        │   └── api.js               # Axios + JWT interceptor + 401 redirect
+        │   └── api.js               # Axios + JWT interceptor + redirect เมื่อ 401
         └── data/
-            └── thaiHolidays.js      # Thai public holidays (fixed + Buddhist lunar)
+            └── thaiHolidays.js      # วันหยุดไทย (คงที่ + จันทรคติ)
 ```
 
 ## API Endpoints
 
-All endpoints except `/api/auth/register` and `/api/auth/login` require `Authorization: Bearer <token>`.
+ทุก endpoint ยกเว้น `/api/auth/register` และ `/api/auth/login` ต้องใส่ `Authorization: Bearer <token>`
 
-| Method | Path | Permission | Description |
+| Method | Path | สิทธิ์ | คำอธิบาย |
 |---|---|---|---|
-| POST | `/api/auth/register` | — | Create account (first = Admin) |
-| POST | `/api/auth/login` | — | Login, returns JWT + user |
-| GET | `/api/auth/me` | auth | Current user profile (includes color) |
-| PATCH | `/api/auth/me` | auth | Update own profile (color) |
-| GET | `/api/tickets` | auth | List tickets |
-| POST | `/api/tickets` | auth | Create ticket |
-| GET | `/api/tickets/:id` | auth | Ticket detail with subtasks, relations, activities |
-| PUT | `/api/tickets/:id` | creator / admin | Update ticket |
-| DELETE | `/api/tickets/:id` | creator / admin | Delete ticket |
-| POST | `/api/tickets/:id/notes` | auth | Add note |
-| DELETE | `/api/tickets/:id/notes/:noteId` | auth | Delete note |
-| POST | `/api/tickets/:id/subtasks` | auth | Add subtask |
-| PATCH | `/api/tickets/:id/subtasks/:subtaskId` | auth | Toggle / rename subtask |
-| DELETE | `/api/tickets/:id/subtasks/:subtaskId` | auth | Delete subtask |
-| POST | `/api/tickets/:id/relations` | auth | Link tickets |
-| DELETE | `/api/tickets/:id/relations/:relationId` | auth | Remove relation |
-| GET | `/api/labels` | auth | List all labels |
-| POST | `/api/labels` | auth | Create label |
-| PUT | `/api/labels/:id` | auth | Update label |
-| DELETE | `/api/labels/:id` | admin | Delete label |
-| GET | `/api/users` | auth | List all users (includes role, color) |
-| PATCH | `/api/users/:id/role` | admin | Promote / demote user |
-| DELETE | `/api/users/:id` | admin | Delete user |
-| GET | `/api/memos` | auth | List own memos |
-| POST | `/api/memos` | auth | Create memo |
-| PUT | `/api/memos/:id` | auth | Update memo |
-| DELETE | `/api/memos/:id` | auth | Delete memo |
+| POST | `/api/auth/register` | — | สร้างบัญชี (คนแรก = Admin) |
+| POST | `/api/auth/login` | — | เข้าสู่ระบบ คืน JWT + ข้อมูล user |
+| GET | `/api/auth/me` | auth | ข้อมูล user ปัจจุบัน (รวมสี) |
+| PATCH | `/api/auth/me` | auth | อัปเดตโปรไฟล์ตัวเอง (สี) |
+| GET | `/api/tickets` | auth | ดูรายการ ticket |
+| POST | `/api/tickets` | auth | สร้าง ticket |
+| GET | `/api/tickets/:id` | auth | ดูรายละเอียด ticket (subtasks, relations, activities) |
+| PUT | `/api/tickets/:id` | ผู้สร้าง / admin | แก้ไข ticket |
+| DELETE | `/api/tickets/:id` | ผู้สร้าง / admin | ลบ ticket |
+| POST | `/api/tickets/:id/notes` | auth | เพิ่ม note |
+| DELETE | `/api/tickets/:id/notes/:noteId` | auth | ลบ note |
+| POST | `/api/tickets/:id/subtasks` | auth | เพิ่ม subtask |
+| PATCH | `/api/tickets/:id/subtasks/:subtaskId` | auth | tick / เปลี่ยนชื่อ subtask |
+| DELETE | `/api/tickets/:id/subtasks/:subtaskId` | auth | ลบ subtask |
+| POST | `/api/tickets/:id/relations` | auth | เชื่อม ticket |
+| DELETE | `/api/tickets/:id/relations/:relationId` | auth | ลบ relation |
+| GET | `/api/labels` | auth | ดู label ทั้งหมด |
+| POST | `/api/labels` | auth | สร้าง label |
+| PUT | `/api/labels/:id` | auth | แก้ไข label |
+| DELETE | `/api/labels/:id` | admin | ลบ label |
+| GET | `/api/users` | auth | ดูรายชื่อ user ทั้งหมด (รวม role, สี) |
+| PATCH | `/api/users/:id/role` | admin | เพิ่ม / ลด สิทธิ์ user |
+| DELETE | `/api/users/:id` | admin | ลบ user |
+| GET | `/api/memos` | auth | ดู memo ของตัวเอง |
+| POST | `/api/memos` | auth | สร้าง memo |
+| PUT | `/api/memos/:id` | auth | แก้ไข memo |
+| DELETE | `/api/memos/:id` | auth | ลบ memo |
 
-## Database Schema
+## โครงสร้างฐานข้อมูล
 
 ```
-User        id, email, name, password, role, color
-Ticket      id, title, description, status, priority, dueDate, position, creatorId, assigneeId
-Subtask     id, title, completed, position, ticketId
+User            id, email, name, password, role, color
+Ticket          id, title, description, status, priority, dueDate, position, creatorId, assigneeId
+Subtask         id, title, completed, position, ticketId
 TicketRelation  id, type (blocks|relates_to|duplicate_of), fromId, toId
-Note        id, content, ticketId, userId
-Label       id, name, color
-Activity    id, action, fromValue, toValue, ticketId, userId
-Memo        id, title, content, pinned, userId
+Note            id, content, ticketId, userId
+Label           id, name, color
+Activity        id, action, fromValue, toValue, ticketId, userId
+Memo            id, title, content, pinned, userId
 ```
 
-## Useful Scripts
+## คำสั่งที่ใช้บ่อย
 
 ```bash
-# From project root
-npm run backend      # Start backend with nodemon (port 3000)
-npm run frontend     # Start Vite dev server (port 5173)
+# จาก root ของโปรเจค
+npm run backend      # รัน backend ด้วย nodemon (port 3000)
+npm run frontend     # รัน Vite dev server (port 5173)
 
-# From backend/
-npm run db:push      # Sync schema to DB (use during development)
-npm run db:studio    # Open Prisma Studio (visual DB browser at :5555)
+# จาก backend/
+npm run db:push      # sync schema กับฐานข้อมูล (ใช้ระหว่าง development)
+npm run db:studio    # เปิด Prisma Studio ดูข้อมูลในฐานข้อมูล (port 5555)
 ```
